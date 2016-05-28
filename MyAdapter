@@ -1,0 +1,85 @@
+package com.ghzxl.fastindex;
+
+import java.util.ArrayList;
+
+import com.itheima85.quickindex.R;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.TextView;
+
+public class MyAdapter extends BaseAdapter{
+	private Context context;
+	private ArrayList<Friend> list;
+	public MyAdapter(Context context, ArrayList<Friend> list) {
+		super();
+		this.context = context;
+		this.list = list;
+	}
+	@Override
+	public int getCount() {
+		return list.size();
+	}
+
+	@Override
+	public Object getItem(int position) {
+		return null;
+	}
+	@Override
+	public long getItemId(int position) {
+		return 0;
+	}
+
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent) {
+		if(convertView==null){
+			convertView = View.inflate(context, R.layout.adapter_friend, null);
+		}
+		
+		ViewHolder holder = ViewHolder.getHolder(convertView);
+		
+		//绑定数据
+		//逻辑：如果当前的首字母和上一个首字母相同，那么则隐藏当前的首字母的TextView
+		Friend friend = list.get(position);
+		String letter = friend.getPinyin().charAt(0)+"";
+		if(position>0){
+			//获取上一个首字母
+			String lastLetter = list.get(position-1).getPinyin().charAt(0)+"";
+			if(letter.equals(lastLetter)){
+				//如果相同，则隐藏当前的
+				holder.tv_letter.setVisibility(View.GONE);
+			}else {
+				//由于是复用的，所以当前需要显示的时候，要设置为可见
+				holder.tv_letter.setVisibility(View.VISIBLE);
+				holder.tv_letter.setText(letter);
+			}
+			
+		}else {
+			//由于是复用的，所以当前需要显示的时候，要设置为可见
+			holder.tv_letter.setVisibility(View.VISIBLE);
+			holder.tv_letter.setText(letter);
+		}
+		holder.tv_name.setText(friend.getName());
+		
+		return convertView;
+	}
+
+	static class ViewHolder{
+		TextView tv_letter,tv_name;
+		public ViewHolder(View view){
+			tv_letter = (TextView) view.findViewById(R.id.tv_letter);
+			tv_name = (TextView) view.findViewById(R.id.tv_name);
+		}
+		public static ViewHolder getHolder(View view){
+			ViewHolder holder = (ViewHolder) view.getTag();
+			if(holder==null){
+				holder = new ViewHolder(view);
+				view.setTag(holder);
+			}
+			return holder;
+		}
+		
+	}
+}
