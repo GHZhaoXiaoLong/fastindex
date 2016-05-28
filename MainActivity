@@ -1,0 +1,145 @@
+package com.ghzxl.fastindex;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
+
+import com.ghzxl.fastindex.QuickIndexBar.OnLetterChangeListener;
+import com.itheima85.quickindex.R;
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.Animator.AnimatorListener;
+import com.nineoldandroids.view.ViewPropertyAnimator;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ListView;
+import android.widget.TextView;
+
+public class MainActivity extends Activity {
+	QuickIndexBar quickIndexBar;
+	ListView listView;
+	TextView currentWord;
+	ArrayList<Friend> friends = new ArrayList<Friend>();
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
+		quickIndexBar = (QuickIndexBar) findViewById(R.id.quickIndexBar);
+		listView = (ListView) findViewById(R.id.listview);
+		currentWord = (TextView) findViewById(R.id.currentWord);
+		
+		quickIndexBar.setOnLetterChangeListener(new OnLetterChangeListener() {
+			@Override
+			public void onLetterChange(String letter) {
+				//从集合中找到和触摸字母一样的条目，然后将其置顶
+				for (int i = 0; i < friends.size(); i++) {
+					String firstWord = friends.get(i).getPinyin().charAt(0)+"";
+					if(firstWord.equals(letter)){
+						//说明找到了，然后置顶
+						listView.setSelection(i);
+						//由于只需要找到第一个，所以立即中断
+						break;
+					}
+				}
+				
+				//弹出当前触摸的字母
+				showCurrentWord(letter);
+
+			}
+		});
+		 
+		//填充数据
+		fillData();
+		//对数据进行排序
+		Collections.sort(friends);
+		
+		listView.setAdapter(new MyAdapter(this,friends));
+		
+//		Log.e("tag", PinYinUtil.getPinYin("拉    面      "));//LAMIAN
+//		Log.e("tag", PinYinUtil.getPinYin("拉ab#面a"));//LAab#MIANa
+//		Log.e("tag", PinYinUtil.getPinYin("拉，。面！"));//LAMIAN
+	}
+	private Handler handler = new Handler();
+	private boolean isRunAnim = false;//是否正在执行动画
+	/**
+	 * 显示当前的字母
+	 * @param letter
+	 */
+	protected void showCurrentWord(String letter) {
+		currentWord.setText(letter);
+		if(!isRunAnim){
+			ViewPropertyAnimator.animate(currentWord).scaleX(1f).scaleY(1f)
+			.setListener(new MyAnimListner())
+			.setDuration(400).start();
+		}
+//		currentWord.setVisibility(View.VISIBLE);
+		
+		//延时消失
+		handler.removeCallbacksAndMessages(null);//先移除之前的所有的
+		handler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+//				currentWord.setVisibility(View.GONE);
+				//动画的方式消失
+				ViewPropertyAnimator.animate(currentWord).scaleX(0f).scaleY(0f)
+				.setDuration(400).start();
+			}
+		}, 1500);
+	}
+
+	private void fillData() {
+		// 虚拟数据
+		friends.add(new Friend("李伟"));
+		friends.add(new Friend("张三"));
+		friends.add(new Friend("阿三"));
+		friends.add(new Friend("阿四"));
+		friends.add(new Friend("段誉"));
+		friends.add(new Friend("段正淳"));
+		friends.add(new Friend("张三丰"));
+		friends.add(new Friend("陈坤"));
+		friends.add(new Friend("林俊杰1"));
+		friends.add(new Friend("陈坤2"));
+		friends.add(new Friend("王二a"));
+		friends.add(new Friend("林俊杰a"));
+		friends.add(new Friend("张四"));
+		friends.add(new Friend("林俊杰"));
+		friends.add(new Friend("王二"));
+		friends.add(new Friend("王二b"));
+		friends.add(new Friend("赵四"));
+		friends.add(new Friend("杨坤"));
+		friends.add(new Friend("赵子龙"));
+		friends.add(new Friend("杨坤1"));
+		friends.add(new Friend("李伟1"));
+		friends.add(new Friend("宋江"));
+		friends.add(new Friend("宋江1"));
+		friends.add(new Friend("李伟3"));
+	}
+
+	class MyAnimListner implements AnimatorListener{
+		@Override
+		public void onAnimationCancel(Animator arg0) {
+		}
+		@Override
+		public void onAnimationEnd(Animator arg0) {
+			isRunAnim = false;
+		}
+		@Override
+		public void onAnimationRepeat(Animator arg0) {
+			
+		}
+		@Override
+		public void onAnimationStart(Animator arg0) {
+			isRunAnim  = true;
+		}
+	}
+}
