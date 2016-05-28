@@ -1,0 +1,128 @@
+package com.ghzxl.fastindex;
+
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Paint.Align;
+import android.graphics.Rect;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.View;
+
+public class QuickIndexBar extends View{
+	private String[] indexArr = { "A", "B", "C", "D", "E", "F", "G", "H",
+			"I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U",
+			"V", "W", "X", "Y", "Z" };
+	private Paint paint;
+	private float width;
+	public QuickIndexBar(Context context, AttributeSet attrs, int defStyle) {
+		super(context, attrs, defStyle);
+		init();
+	}
+
+	public QuickIndexBar(Context context, AttributeSet attrs) {
+		this(context, attrs,0);
+	}
+
+	public QuickIndexBar(Context context) {
+		this(context,null);
+	}
+	
+	private void init(){
+		paint = new Paint(Paint.ANTI_ALIAS_FLAG);//设置抗锯齿，让锯齿显示的比较平滑
+		paint.setTextSize(16);
+		paint.setColor(Color.WHITE);
+		//由于文字绘制的起点默认是左下角
+		//设置绘制文本的起点是文字的底边的中心
+		paint.setTextAlign(Align.CENTER);
+	}
+	
+	private float cellHeight;
+	@Override
+	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+		super.onSizeChanged(w, h, oldw, oldh);
+		width = getMeasuredWidth();
+		cellHeight = getMeasuredHeight()*1f/indexArr.length;
+	}
+	
+	@Override
+	protected void onDraw(Canvas canvas) {
+		//遍历数组，绘制26个字母
+		for (int i = 0; i < indexArr.length; i++) {
+			String text = indexArr[i];
+			//y坐标：格子高度的一半 + 文字高度一半 + 格子高度*i
+			float y = cellHeight/2 + getTextHeight(text)/2 + cellHeight*i;
+			
+			//判断当前的i是否和index一样，如果一样则变色
+			paint.setColor(i==index?Color.BLACK:Color.WHITE);
+			
+			drawCenterHorizontalText(canvas, text, y);
+		}
+	}
+	private float touchY;
+	private int index = -1;//note: 默认值不能是0
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		switch (event.getAction()) {
+		case MotionEvent.ACTION_DOWN:
+		case MotionEvent.ACTION_MOVE:
+			//计算y坐标对应的字母的算法：拿y坐标除以格子的高度，得到的值就是对应字母的索引
+			touchY = event.getY();
+			int currentIndex = (int) (touchY/cellHeight);//获取当前的索引
+			//判断当前索引和上一次是否一样
+			if(currentIndex!=index){
+				index = currentIndex;
+				//对index进行安全性的判断
+				if(index>=0 && index<(indexArr.length)){
+					String word = indexArr[index];
+					if(listener!=null){
+						listener.onLetterChange(word);
+					}
+				}
+			}
+			break;
+		case MotionEvent.ACTION_UP:
+			//抬起的时候要重置索引
+			index = -1;
+			break;
+		}
+		//触摸的时候引起重绘
+		invalidate();
+		return true;
+	}
+	
+	/**
+	 * 获取文字的高度
+	 * @param text
+	 * @return
+	 */
+	private int getTextHeight(String text) {
+		Rect bounds = new Rect();
+		paint.getTextBounds(text,0,text.length(), bounds);//方法执行完，bounds中就有值了
+		return bounds.height();
+	}
+
+	/**
+	 * 绘制水平居中的文字
+	 * @param canvas
+	 * @param text
+	 * @param y
+	 */
+	private void drawCenterHorizontalText(Canvas canvas,String text,float y){
+		float x = width/2;
+		canvas.drawText(text, x, y, paint);
+	}
+	private OnLetterChangeListener listener;
+	public void setOnLetterChangeListener(OnLetterChangeListener listener){
+		this.listener =listener;
+	}
+	public interface OnLetterChangeListener{
+		/**
+		 * 当前触摸字母改变的回调
+		 * @param letter
+		 */
+		void onLetterChange(String letter);
+	}
+	
+}
